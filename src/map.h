@@ -1888,6 +1888,8 @@ class map
         void draw_slimepit( const mapgendata &dat );
         void draw_connections( const mapgendata &dat );
 
+        void place_spawns(const mongroup_id& group, const int chance, const tripoint& p, const float density, const bool individual, const bool friendly, const std::string& name, const int mission_id);
+
         // Builds a transparency cache and returns true if the cache was invalidated.
         // Used to determine if seen cache should be rebuilt.
         bool build_transparency_cache( int zlev );

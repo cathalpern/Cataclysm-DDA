@@ -6137,37 +6137,56 @@ void map::draw_connections( const mapgendata &dat )
     resolve_regional_terrain_and_furniture( dat );
 }
 
-void map::place_spawns( const mongroup_id &group, const int chance,
-                        const point &p1, const point &p2, const float density,
-                        const bool individual, const bool friendly, const std::string &name, const int mission_id )
-{
-    if( !group.is_valid() ) {
-        const tripoint_abs_omt omt = project_to<coords::omt>( get_abs_sub() );
-        const oter_id &oid = overmap_buffer.ter( omt );
-        debugmsg( "place_spawns: invalid mongroup '%s', om_terrain = '%s' (%s)", group.c_str(),
-                  oid.id().c_str(), oid->get_mapgen_id().c_str() );
+void map::place_spawns(const mongroup_id &group, const int chance,
+    const tripoint &p, const float density,
+    const bool individual, const bool friendly, const std::string &name, const int mission_id) {
+    if (!group.is_valid()) {
+        const tripoint_abs_omt omt = project_to<coords::omt>(get_abs_sub());
+        const oter_id& oid = overmap_buffer.ter(omt);
+        debugmsg("place_spawns: invalid mongroup '%s', om_terrain = '%s' (%s)", group.c_str(),
+            oid.id().c_str(), oid->get_mapgen_id().c_str());
         return;
     }
 
     // Set chance to be 1 or less to guarantee spawn, else set higher than 1
-    if( !one_in( chance ) ) {
+    if (!one_in(chance)) {
         return;
     }
 
     float spawn_density = 1.0f;
-    if( MonsterGroupManager::is_animal( group ) ) {
-        spawn_density = get_option< float >( "SPAWN_ANIMAL_DENSITY" );
-    } else {
-        spawn_density = get_option< float >( "SPAWN_DENSITY" );
+    if (MonsterGroupManager::is_animal(group)) {
+        spawn_density = get_option< float >("SPAWN_ANIMAL_DENSITY");
+    }
+    else {
+        spawn_density = get_option< float >("SPAWN_DENSITY");
     }
 
     float multiplier = density * spawn_density;
     // Only spawn 1 creature if individual flag set, else scale by density
-    float thenum = individual ? 1 : ( multiplier * rng_float( 10.0f, 50.0f ) );
-    int num = roll_remainder( thenum );
+    float thenum = individual ? 1 : (multiplier * rng_float(10.0f, 50.0f));
+    int num = roll_remainder(thenum);
 
     // GetResultFromGroup decrements num
-    while( num > 0 ) {
+    while (num > 0) {
+        int tries = 10;
+
+        // Pick a monster type
+        std::vector<MonsterGroupResult> spawn_details =
+            MonsterGroupManager::GetResultFromGroup(group, &num);
+        for (const MonsterGroupResult& mgr : spawn_details) {
+            add_spawn(mgr.name, mgr.pack_size, p,
+                friendly, -1, mission_id, name, mgr.data);
+        }
+    }
+
+
+}
+
+void map::place_spawns( const mongroup_id &group, const int chance,
+                        const point &p1, const point &p2, const float density,
+                        const bool individual, const bool friendly, const std::string &name, const int mission_id )
+{
+   
         int tries = 10;
         point p;
 
@@ -6178,14 +6197,10 @@ void map::place_spawns( const mongroup_id &group, const int chance,
             tries--;
         } while( impassable( p ) && tries > 0 );
 
-        // Pick a monster type
-        std::vector<MonsterGroupResult> spawn_details =
-            MonsterGroupManager::GetResultFromGroup( group, &num );
-        for( const MonsterGroupResult &mgr : spawn_details ) {
-            add_spawn( mgr.name, mgr.pack_size, { p, abs_sub.z() },
-                       friendly, -1, mission_id, name, mgr.data );
-        }
-    }
+        tripoint t =  tripoint(p, abs_sub.z());
+
+        place_spawns(group, chance, t, density, individual, friendly, name, mission_id);      
+    
 }
 
 void map::place_gas_pump( const point &p, int charges, const itype_id &fuel_type )
