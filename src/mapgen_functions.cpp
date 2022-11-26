@@ -46,6 +46,7 @@ static const item_group_id Item_spawn_data_sewer( "sewer" );
 static const item_group_id Item_spawn_data_wreckage( "wreckage" );
 
 static const mongroup_id GROUP_ZOMBIE( "GROUP_ZOMBIE" );
+static const mongroup_id GROUP_FAMOUS_SINGERS("GROUP_FAMOUS_SINGERS");
 
 static const mtype_id mon_bee( "mon_bee" );
 static const mtype_id mon_beekeeper( "mon_beekeeper" );
@@ -967,7 +968,7 @@ void mapgen_road( mapgendata &dat )
                          dat.monster_density() );
         // 1 per 10 overmaps
         if( one_in( 10000 ) ) {
-            m->add_spawn( mon_zombie_jackson, 1, { SEEX, SEEY, m->get_abs_sub().z() } );
+            m->place_spawns(GROUP_FAMOUS_SINGERS, 1, point_zero, point(SEEX, SEEY), 1, true);
         }
     }
 

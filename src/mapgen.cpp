@@ -83,6 +83,7 @@
 #include "weighted_list.h"
 #include "creature_tracker.h"
 
+
 static const furn_str_id furn_f_console( "f_console" );
 static const furn_str_id furn_f_sign( "f_sign" );
 
@@ -250,6 +251,9 @@ void map::generate( const tripoint &p, const time_point &when )
     }
 
     // Apply a multiplier to the number of monsters for really high densities.
+
+
+   
     float odds_after_density = spawns.chance * spawn_density;
     const float max_odds = 100 - ( 100 - spawns.chance ) / 2.0f;
     float density_multiplier = 1.0f;
@@ -258,25 +262,23 @@ void map::generate( const tripoint &p, const time_point &when )
         odds_after_density = max_odds;
     }
     const int spawn_count = roll_remainder( density_multiplier );
-
+    const tripoint_range<tripoint> pointsInRange = points_in_range(*this);
     if( spawns.group && x_in_y( odds_after_density, 100 ) ) {
         int pop = spawn_count * rng( spawns.population.min, spawns.population.max );
         for( ; pop > 0; pop-- ) {
             std::vector<MonsterGroupResult> spawn_details =
                 MonsterGroupManager::GetResultFromGroup( spawns.group, &pop );
-            for( const MonsterGroupResult &mgr : spawn_details ) {
-                if( !mgr.name ) {
+            for (const MonsterGroupResult& mgr : spawn_details) {
+                if (!mgr.name) {
                     continue;
                 }
-                if( const cata::optional<tripoint> pt =
-                random_point( *this, [this]( const tripoint & n ) {
-                return passable( n );
-                } ) ) {
-                    add_spawn( mgr, *pt );
-                }
+
+                place_spawns(spawns.group, 1, pointsInRange.min().xy(), pointsInRange.max().xy(), spawn_density);
             }
+                
         }
     }
+    
 
     // Okay, we know who are neighbors are.  Let's draw!
     // And finally save used submaps and delete the rest.
@@ -2364,13 +2366,9 @@ class jmapgen_monster : public jmapgen_piece
 
             mongroup_id chosen_group = m_id.get( dat );
             if( !chosen_group.is_null() ) {
-                std::vector<MonsterGroupResult> spawn_details =
-                    MonsterGroupManager::GetResultFromGroup( chosen_group );
-                for( const MonsterGroupResult &mgr : spawn_details ) {
-                    dat.m.add_spawn( mgr.name, spawn_count * pack_size.get(),
-                    { x.get(), y.get(), dat.m.get_abs_sub().z() },
-                    friendly, -1, mission_id, name, data );
-                }
+               dat.m.place_spawns(chosen_group, raw_odds == 100 ? 1 : odds_after_density, point(x.get(), y.get()), point(x.get(), y.get()), density_multiplier, one_or_none,
+                    friendly, name, mission_id);
+                
             } else {
                 mtype_id chosen_type = ids.pick()->get( dat );
                 if( !chosen_type.is_null() ) {
@@ -6144,9 +6142,10 @@ void map::draw_connections( const mapgendata &dat )
     resolve_regional_terrain_and_furniture( dat );
 }
 
-void map::place_spawns(const mongroup_id &group, const int chance,
-    const tripoint &p, const float density,
-    const bool individual, const bool friendly, const std::string &name, const int mission_id) {
+void map::place_spawns(const mongroup_id& group, const int chance,
+    const point &p1, const point &p2, const float density,
+    const bool individual, const bool friendly, const std::string& name, const int mission_id)
+{
     if (!group.is_valid()) {
         const tripoint_abs_omt omt = project_to<coords::omt>(get_abs_sub());
         const oter_id& oid = overmap_buffer.ter(omt);
@@ -6176,38 +6175,23 @@ void map::place_spawns(const mongroup_id &group, const int chance,
     // GetResultFromGroup decrements num
     while (num > 0) {
         int tries = 10;
+        point p;
+
+        // Pick a spot for the spawn
+        do {
+            p.x = rng(p1.x, p2.x);
+            p.y = rng(p1.y, p2.y);
+            tries--;
+        } while (impassable(p) && tries > 0);
 
         // Pick a monster type
         std::vector<MonsterGroupResult> spawn_details =
             MonsterGroupManager::GetResultFromGroup(group, &num);
         for (const MonsterGroupResult& mgr : spawn_details) {
-            add_spawn(mgr.name, mgr.pack_size, p,
+            add_spawn(mgr.name, mgr.pack_size, { p, abs_sub.z() },
                 friendly, -1, mission_id, name, mgr.data);
         }
     }
-
-
-}
-
-void map::place_spawns( const mongroup_id &group, const int chance,
-                        const point &p1, const point &p2, const float density,
-                        const bool individual, const bool friendly, const std::string &name, const int mission_id )
-{
-   
-        int tries = 10;
-        point p;
-
-        // Pick a spot for the spawn
-        do {
-            p.x = rng( p1.x, p2.x );
-            p.y = rng( p1.y, p2.y );
-            tries--;
-        } while( impassable( p ) && tries > 0 );
-
-        tripoint t =  tripoint(p, abs_sub.z());
-
-        place_spawns(group, chance, t, density, individual, friendly, name, mission_id);      
-    
 }
 
 void map::place_gas_pump( const point &p, int charges, const itype_id &fuel_type )
