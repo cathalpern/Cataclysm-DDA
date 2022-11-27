@@ -47,10 +47,8 @@ static const item_group_id Item_spawn_data_wreckage( "wreckage" );
 
 static const mongroup_id GROUP_ZOMBIE( "GROUP_ZOMBIE" );
 static const mongroup_id GROUP_FAMOUS_SINGERS("GROUP_FAMOUS_SINGERS");
-
-static const mtype_id mon_bee( "mon_bee" );
-static const mtype_id mon_beekeeper( "mon_beekeeper" );
-static const mtype_id mon_zombie_jackson( "mon_zombie_jackson" );
+static const mongroup_id GROUP_BEE("GROUP_BEE");
+static const mongroup_id GROUP_BEEKEEPER("GROUP_BEEKEEPER");
 
 static const npc_template_id npc_template_apis( "apis" );
 
@@ -316,9 +314,15 @@ void mapgen_hive( mapgendata &dat )
         }
     }
 
+    m->place_spawns(GROUP_BEE, 2, point(5, 5), point(11, 11), 2);
+    m->place_spawns(GROUP_BEEKEEPER, 2, point(5, 5), point(11, 11), 1);
+
+
     // j and i loop through appropriate hive-cell center squares
     const bool is_center = dat.t_nesw[0] == oter_hive && dat.t_nesw[1] == oter_hive &&
                            dat.t_nesw[2] == oter_hive && dat.t_nesw[3] == oter_hive;
+    
+   
     for( int j = 5; j < SEEY * 2 - 5; j += 6 ) {
         for( int i = j == 5 || j == 17 ? 3 : 6; i < SEEX * 2 - 5; i += 6 ) {
             if( !one_in( 8 ) ) {
@@ -330,8 +334,6 @@ void mapgen_hive( mapgendata &dat )
                         m->ter_set( point( i + k, j + l ), t_floor_wax );
                     }
                 }
-                m->add_spawn( mon_bee, 2, { i, j, m->get_abs_sub().z() } );
-                m->add_spawn( mon_beekeeper, 1, { i, j, m->get_abs_sub().z() } );
                 m->ter_set( point( i, j - 3 ), t_floor_wax );
                 m->ter_set( point( i, j + 3 ), t_floor_wax );
                 m->ter_set( point( i - 1, j - 2 ), t_floor_wax );
