@@ -57,25 +57,25 @@ void mission_start::standard( mission * )
 {
 }
 
-void mission_start::place_dog( mission *miss )
-{
-    const tripoint_abs_omt house = mission_util::random_house_in_closest_city();
-    npc *dev = g->find_npc( miss->npc_id );
-    if( dev == nullptr ) {
-        debugmsg( "Couldn't find NPC!  %d", miss->npc_id.get_value() );
-        return;
-    }
-    get_player_character().i_add( item( "dog_whistle", calendar::turn_zero ) );
-    add_msg( _( "%s gave you a dog whistle." ), dev->get_name() );
-
-    miss->target = house;
-    overmap_buffer.reveal( house, 6 );
-
-    tinymap doghouse;
-    doghouse.load( project_to<coords::sm>( house ), false );
-    doghouse.add_spawn( mon_dog, 1, { SEEX, SEEY, house.z() }, true, -1, miss->uid );
-    doghouse.save();
-}
+//void mission_start::place_dog( mission *miss )
+//{
+//    const tripoint_abs_omt house = mission_util::random_house_in_closest_city();
+//    npc *dev = g->find_npc( miss->npc_id );
+//    if( dev == nullptr ) {
+//        debugmsg( "Couldn't find NPC!  %d", miss->npc_id.get_value() );
+//        return;
+//    }
+//    get_player_character().i_add( item( "dog_whistle", calendar::turn_zero ) );
+//    add_msg( _( "%s gave you a dog whistle." ), dev->get_name() );
+//
+//    miss->target = house;
+//    overmap_buffer.reveal( house, 6 );
+//
+//    tinymap doghouse;
+//    doghouse.load( project_to<coords::sm>( house ), false );
+//    doghouse.add_spawn( mon_dog, 1, { SEEX, SEEY, house.z() }, true, -1, miss->uid );
+//    doghouse.save();
+//}
 
 void mission_start::place_zombie_mom( mission *miss )
 {

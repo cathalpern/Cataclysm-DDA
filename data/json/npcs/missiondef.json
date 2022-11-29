@@ -655,7 +655,18 @@
     "difficulty": 3,
     "value": 100000,
     "place": "near_town",
-    "start": "place_dog",
+    "start": {
+      "effect": [ { "u_spawn_item": "dog_whistle" } ],
+      "assign_mission_target": {
+        "om_terrain": "house",
+        "om_terrain_match_type": "PREFIX",
+        "reveal_radius": 1,
+        "random": true,
+        "search_range": 60,
+        "z": 0
+      },
+      "update_mapgen": { "place_monster": [ { "monster": "mon_dog", "x": 12, "y": 12, "target": true, "friendly": true } ] }
+    },
     "origins": [ "ORIGIN_OPENER_NPC" ],
     "dialogue": {
       "describe": "Oh, my poor puppy…",
